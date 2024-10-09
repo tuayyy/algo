@@ -19,20 +19,51 @@ class Rank:
         self.value = card_value
 
 class Solitaire(ft.Stack):
-    def __init__(self, username=None):
+    def __init__(self, username=None, page=None):
         super().__init__()
         self.controls = []
         self.width = SOLITAIRE_WIDTH
         self.height = SOLITAIRE_HEIGHT
         self.username = username  # Store player's username
         self.start_time = time.time()  # Track game start time
+        self.page = page  # Store a reference to the page object
+
+        # Register the keyboard event handler with the page
+        if self.page:
+            self.page.on_keyboard_event = self.keyboard_event
+            print("Keyboard event listener registered.")  # Debugging line
+
+        # Create and position the button
+        self.create_button()
+
+    def create_button(self):
+        # Create a button and set its properties
+        button = ft.ElevatedButton(
+            text="Finish Game",
+            on_click=self.finish_game,  # Set the action for the button click
+            width=150,
+            height=50,
+        )
+
+        # Add the button to the bottom corner
+        self.controls.append(
+            ft.Row(
+                [button],
+                alignment=ft.MainAxisAlignment.END,
+                spacing=10,
+                expand=True,
+            )
+        )
+
+    def finish_game(self, e):
+        """Function to finish the game when the button is clicked."""
+        print("Finish Game button clicked!")
+        self.winning_sequence()  # Call the winning sequence to end the game
 
     def did_mount(self):
         self.create_card_deck()
         self.create_slots()
         self.deal_cards()
-
-    # ... (Rest of the class implementation remains the same)
 
     def create_card_deck(self):
         suites = [
@@ -146,9 +177,7 @@ class Solitaire(ft.Stack):
         cards_num = 0
         for slot in self.foundations:
             cards_num += len(slot.pile)
-        if cards_num == 52:
-            return True
-        return False
+        return cards_num == 52  # Return True if all cards are in foundations
 
     def winning_sequence(self):
         # Calculate winning time
@@ -156,17 +185,24 @@ class Solitaire(ft.Stack):
 
         # Save winner data
         save_winner_data(self.username, winning_time)
+        print("Winner Sequence Runned")
 
         # Animate winning cards
         for slot in self.foundations:
             for card in slot.pile:
-                card.animate_position = 2000
-                card.move_on_top()
-                card.top = random.randint(0, SOLITAIRE_HEIGHT)
-                card.left = random.randint(0, SOLITAIRE_WIDTH)
-                self.update()
+                card.animate_position = 2000  # Duration of the animation
+                card.move_on_top()             # Bring the card to the top of the stack
+                card.top = random.randint(0, SOLITAIRE_HEIGHT)  # Randomize vertical position
+                card.left = random.randint(0, SOLITAIRE_WIDTH)  # Randomize horizontal position
+                self.update()  # Refresh the UI to reflect the changes
         
         # Display winning message
         self.controls.append(
             ft.AlertDialog(title=ft.Text(f"Congratulations {self.username}! You won in {winning_time:.2f} seconds!"), open=True)
         )
+
+    def keyboard_event(self, e):
+        print(f"Key pressed: {e.key}")  # Print the key pressed for debugging
+        if e.key == "w":  # Detect if "w" key is pressed
+            print("Hidden key 'w' pressed, you win the game!")
+            self.winning_sequence()  # Call the winning sequence

@@ -1,0 +1,2 @@
+SIgma,1.05 seconds
+Jirateep,1.56 seconds
